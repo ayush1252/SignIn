@@ -44,7 +44,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
     CallbackManager callbackManager;
 
     SignInButton signInButton;
-
+Intent intent;
     Button signOutButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +53,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
         setContentView(R.layout.activity_sign_in);
         AppEventsLogger.activateApp(this);
         mAuth = FirebaseAuth.getInstance();
+         intent=new Intent(this,AfterSignedInActvity.class);
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .requestProfile()
@@ -69,6 +70,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth){
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if(user != null) {
+                    startActivity(intent);
                     Toast.makeText(getApplicationContext(), "Tu already Registered hai chomu ", Toast.LENGTH_SHORT).show();
                 }
                 else {
@@ -79,6 +81,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
 
         if(Profile.getCurrentProfile()!=null)
         {
+            startActivity(intent);
             Toast.makeText(this, "Tu already Registered hai chomu ", Toast.LENGTH_SHORT).show();
         }
 
@@ -106,6 +109,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
             @Override
             public void onSuccess(LoginResult loginResult) {
                 //We Can do Our Backchowdi here
+                startActivity(intent);
                 Toast.makeText(SignInActivity.this, "Ho Gaya SignIn", Toast.LENGTH_SHORT).show();
             }
 
@@ -158,6 +162,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
             GoogleSignInAccount acct = result.getSignInAccount();
             firebaseAuthWithGoogle(acct);
             //We can do our required backchowdi here
+            startActivity(intent);
             Toast.makeText(SignInActivity.this, "Ho Gaya SignIn", Toast.LENGTH_SHORT).show();
 
 
