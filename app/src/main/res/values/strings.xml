@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">SignInGoogle</string>
-    <string name="facebook_application_id">1445020492175937</string>
+    <string name="facebook_app_id">1445020492175937</string>
+    <string name="fb_login_protocol_scheme">fbAPP_ID</string>
 </resources>

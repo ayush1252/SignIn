@@ -7,11 +7,19 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.FacebookSdk;
+import com.facebook.Profile;
+import com.facebook.appevents.AppEventsLogger;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInApi;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
@@ -25,36 +33,26 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-import org.w3c.dom.Text;
-
-
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
+public class SignInActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener{
     private GoogleApiClient mGoogleApiClient;
     private static final int RC_SIGN_IN = 9001;
-    private static final String TAG = "SignInActivity";
-    TextView textView;
+
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
 
+    LoginButton loginButton;
+    CallbackManager callbackManager;
+
+    SignInButton signInButton;
+
+    Button signOutButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        setContentView(R.layout.activity_sign_in);
+        AppEventsLogger.activateApp(this);
         mAuth = FirebaseAuth.getInstance();
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth){
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if(user != null) {
-                   //This will be exectued if the user already exists
-                    textView.setText(user.getDisplayName());
-                }
-                else {
-                   //This will be executed otherwise
-                }
-            }
-        };
-
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .requestProfile()
@@ -66,9 +64,29 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 .enableAutoManage(this, this)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .build();
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth){
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if(user != null) {
+                    Toast.makeText(getApplicationContext(), "Tu already Registered hai chomu ", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    //This will be executed otherwise
+                }
+            }
+        };
 
-        SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
-        Button signOutButton=(Button)findViewById(R.id.button2);
+        if(Profile.getCurrentProfile()!=null)
+        {
+            Toast.makeText(this, "Tu already Registered hai chomu ", Toast.LENGTH_SHORT).show();
+        }
+
+        signInButton = (SignInButton) findViewById(R.id.sign_in_button);
+        loginButton = (LoginButton)findViewById(R.id.login_button);
+        loginButton.setReadPermissions("public_profile");
+        callbackManager=CallbackManager.Factory.create();
+        signOutButton=(Button)findViewById(R.id.button2);
         signInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -76,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 startActivityForResult(signInIntent, RC_SIGN_IN);
             }
         });
-        textView=(TextView)findViewById(R.id.textView);
+
         signOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -84,12 +102,30 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             }
         });
 
+        loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                //We Can do Our Backchowdi here
+                Toast.makeText(SignInActivity.this, "Ho Gaya SignIn", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCancel() {
+                Log.d("lalala", "User Canceeled");
+            }
+
+            @Override
+            public void onError(FacebookException error) {
+                Log.d("lalala", "An error accourde");
+            }
+        });
+
+
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.d(TAG, "onConnectionFailed:" + connectionResult);
-
+        Log.d("lalala", "onConnectionFailed:" + connectionResult);
     }
     @Override
     protected void onStart() {
@@ -105,26 +141,28 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleSignInResult(result);
         }
+        else {
+            callbackManager.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     private void handleSignInResult(GoogleSignInResult result) {
-        Log.d(TAG, "handleSignInResult:" + result.isSuccess());
+        Log.d("lalalala", "handleSignInResult:" + result.isSuccess());
         if (result.isSuccess()) {
-            // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
             firebaseAuthWithGoogle(acct);
-            textView.setText(acct.getDisplayName());
+            //We can do our required backchowdi here
+            Toast.makeText(SignInActivity.this, "Ho Gaya SignIn", Toast.LENGTH_SHORT).show();
+
 
         } else {
-            Log.d(TAG, "SigninResult: Fail");
+            Log.d("lallala", "SigninResult: Fail");
         }
     }
 
@@ -134,10 +172,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        Log.d(TAG, "signInWithCredential:oncomplete: " + task.isSuccessful());
+                        Log.d("lalala", "signInWithCredential:oncomplete: " + task.isSuccessful());
                     }
                 });
     }
-
-
 }
